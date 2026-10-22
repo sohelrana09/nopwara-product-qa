@@ -1,0 +1,85 @@
+@model Nop.Plugin.Misc.NopwaraQA.Models.Admin.ConfigurationModel
+
+@{
+    Layout = "_ConfigurePlugin";
+}
+
+<form asp-controller="NopwaraQAAdmin" asp-action="Configure" method="post">
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-default">
+                <div class="card-body">
+                    <p>@T("Plugins.Misc.NopwaraQA.Instructions")</p>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="AllowedThemes" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="AllowedThemes" />
+                            <span asp-validation-for="AllowedThemes"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="AllowGuests" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="AllowGuests" />
+                            <span asp-validation-for="AllowGuests"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="QuestionsMustBeApproved" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="QuestionsMustBeApproved" />
+                            <span asp-validation-for="QuestionsMustBeApproved"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="ShowUnanswered" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="ShowUnanswered" />
+                            <span asp-validation-for="ShowUnanswered"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="VisibleQuestions" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="VisibleQuestions" />
+                            <span asp-validation-for="VisibleQuestions"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="NotifyStoreOwner" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="NotifyStoreOwner" />
+                            <span asp-validation-for="NotifyStoreOwner"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="NotifyCustomer" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="NotifyCustomer" />
+                            <span asp-validation-for="NotifyCustomer"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-9 offset-md-3">
+                            <input type="submit" name="save" class="btn btn-primary" value="@T("Admin.Common.Save")" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</form>

@@ -1,0 +1,169 @@
+@model Nop.Plugin.Misc.NopwaraQA.Models.Admin.ProductQuestionSearchModel
+
+@using Nop.Plugin.Misc.NopwaraQA.Models.Admin
+@using Nop.Web.Framework.Models.DataTables
+
+@{
+    Layout = "_AdminLayout";
+    ViewBag.PageTitle = T("Plugins.Misc.NopwaraQA.Questions").Text;
+    NopHtml.SetActiveMenuItemSystemName(Nop.Plugin.Misc.NopwaraQA.NopwaraQADefaults.ADMIN_MENU_SYSTEM_NAME);
+}
+
+<div class="content-header clearfix">
+    <h1 class="float-left">@T("Plugins.Misc.NopwaraQA.Questions")</h1>
+    <div class="float-right">
+        <button type="button" id="publish-selected" class="btn btn-success">
+            <i class="far fa-check-square"></i>
+            @T("Plugins.Misc.NopwaraQA.PublishSelected")
+        </button>
+        <button type="button" id="unpublish-selected" class="btn btn-secondary">
+            <i class="far fa-minus-square"></i>
+            @T("Plugins.Misc.NopwaraQA.UnpublishSelected")
+        </button>
+        <button type="button" id="delete-selected" class="btn btn-danger">
+            <i class="far fa-trash-can"></i>
+            @T("Admin.Common.Delete.Selected")
+        </button>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <div class="form-horizontal">
+            <div class="cards-group">
+                <div class="card card-default card-search">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group row">
+                                    <div class="col-md-4"><nop-label asp-for="SearchText" /></div>
+                                    <div class="col-md-8"><nop-editor asp-for="SearchText" /></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group row">
+                                    <div class="col-md-4"><nop-label asp-for="SearchStatus" /></div>
+                                    <div class="col-md-8"><nop-select asp-for="SearchStatus" asp-items="Model.AvailableStatuses" /></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="text-center col-12">
+                                <button type="button" id="search-questions" class="btn btn-primary btn-search">
+                                    <i class="fas fa-magnifying-glass"></i>
+                                    @T("Admin.Common.Search")
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card card-default">
+                    <div class="card-body">
+                        @await Html.PartialAsync("Table", new DataTablesModel
+                        {
+                            Name = "questions-grid",
+                            UrlRead = new DataUrl("QuestionList", "NopwaraQAAdmin", null),
+                            SearchButtonId = "search-questions",
+                            Length = Model.PageSize,
+                            LengthMenu = Model.AvailablePageSizes,
+                            Filters = new List<FilterParameter>
+                            {
+                                new(nameof(Model.SearchText)),
+                                new(nameof(Model.SearchStatus))
+                            },
+                            ColumnCollection = new List<ColumnProperty>
+                            {
+                                new(nameof(ProductQuestionModel.Id))
+                                {
+                                    IsMasterCheckBox = true,
+                                    Render = new RenderCheckBox("checkbox_questions"),
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Width = "50"
+                                },
+                                new(nameof(ProductQuestionModel.QuestionText))
+                                {
+                                    Title = T("Plugins.Misc.NopwaraQA.Fields.QuestionText").Text
+                                },
+                                new(nameof(ProductQuestionModel.ProductName))
+                                {
+                                    Title = T("Plugins.Misc.NopwaraQA.Fields.Product").Text,
+                                    Width = "220"
+                                },
+                                new(nameof(ProductQuestionModel.CustomerInfo))
+                                {
+                                    Title = T("Plugins.Misc.NopwaraQA.Fields.Customer").Text,
+                                    Width = "200"
+                                },
+                                new(nameof(ProductQuestionModel.Answered))
+                                {
+                                    Title = T("Plugins.Misc.NopwaraQA.Fields.Answered").Text,
+                                    Width = "90",
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Render = new RenderBoolean()
+                                },
+                                new(nameof(ProductQuestionModel.IsApproved))
+                                {
+                                    Title = T("Plugins.Misc.NopwaraQA.Fields.IsApproved").Text,
+                                    Width = "90",
+                                    ClassName = NopColumnClassDefaults.CenterAll,
+                                    Render = new RenderBoolean()
+                                },
+                                new(nameof(ProductQuestionModel.CreatedOn))
+                                {
+                                    Title = T("Plugins.Misc.NopwaraQA.Fields.CreatedOn").Text,
+                                    Width = "160",
+                                    Render = new RenderDate()
+                                },
+                                new(nameof(ProductQuestionModel.Id))
+                                {
+                                    Title = T("Admin.Common.Edit").Text,
+                                    Width = "80",
+                                    ClassName = NopColumnClassDefaults.Button,
+                                    Render = new RenderButtonEdit(new DataUrl("~/Admin/NopwaraQAAdmin/Edit"))
+                                }
+                            }
+                        })
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    $(function() {
+        function postSelected(url, extra) {
+            var postData = $.extend({ selectedIds: selectedIds }, extra || {});
+            addAntiForgeryToken(postData);
+            $.ajax({
+                cache: false,
+                type: "POST",
+                url: url,
+                data: postData,
+                traditional: true,
+                error: function (jqXHR, textStatus, errorThrown) {
+                    showAlert('questionsActionFailed', errorThrown);
+                },
+                complete: function (jqXHR) {
+                    if (jqXHR.status === 204) {
+                        showAlert('nothingSelectedAlert', '@T("Admin.Common.Alert.NothingSelected")');
+                        return;
+                    }
+                    updateTable('#questions-grid');
+                }
+            });
+        }
+
+        $('#publish-selected').on('click', function () { postSelected('@Url.Action("PublishSelected", "NopwaraQAAdmin")', { publish: true }); });
+        $('#unpublish-selected').on('click', function () { postSelected('@Url.Action("PublishSelected", "NopwaraQAAdmin")', { publish: false }); });
+        $('#delete-selected-action-confirmation-submit-button').on('click', function () {
+            postSelected('@Url.Action("DeleteSelected", "NopwaraQAAdmin")');
+            $('#delete-selected-action-confirmation').modal('toggle');
+            return false;
+        });
+    });
+</script>
+<nop-alert asp-alert-id="questionsActionFailed" />
+<nop-alert asp-alert-id="nothingSelectedAlert" />
+<nop-action-confirmation asp-button-id="delete-selected" />

@@ -1,0 +1,87 @@
+@model Nop.Plugin.Misc.NopwaraQA.Models.Admin.ProductQuestionModel
+
+@{
+    Layout = "_AdminLayout";
+    ViewBag.PageTitle = T("Plugins.Misc.NopwaraQA.Edit").Text;
+    NopHtml.SetActiveMenuItemSystemName(Nop.Plugin.Misc.NopwaraQA.NopwaraQADefaults.ADMIN_MENU_SYSTEM_NAME);
+}
+
+<form asp-controller="NopwaraQAAdmin" asp-action="Edit" method="post">
+    <input asp-for="Id" type="hidden" />
+    <div class="content-header clearfix">
+        <h1 class="float-left">
+            @T("Plugins.Misc.NopwaraQA.Edit")
+            <small>
+                <i class="fas fa-arrow-circle-left"></i>
+                <a asp-action="List">@T("Plugins.Misc.NopwaraQA.BackToList")</a>
+            </small>
+        </h1>
+        <div class="float-right">
+            <button type="submit" name="save" class="btn btn-primary">
+                <i class="far fa-floppy-disk"></i>
+                @T("Admin.Common.Save")
+            </button>
+            <button type="submit" name="save-continue" class="btn btn-primary">
+                <i class="far fa-floppy-disk"></i>
+                @T("Admin.Common.SaveContinue")
+            </button>
+            <span id="question-delete" class="btn btn-danger">
+                <i class="far fa-trash-can"></i>
+                @T("Admin.Common.Delete")
+            </span>
+        </div>
+    </div>
+
+    <section class="content">
+        <div class="container-fluid">
+            <div class="card card-default">
+                <div class="card-body">
+                    <div class="form-group row">
+                        <div class="col-md-3"><nop-label asp-for="ProductName" /></div>
+                        <div class="col-md-9">
+                            <a asp-controller="Product" asp-action="Edit" asp-route-id="@Model.ProductId" class="form-text-row">@Model.ProductName</a>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><nop-label asp-for="CustomerInfo" /></div>
+                        <div class="col-md-9">
+                            <a asp-controller="Customer" asp-action="Edit" asp-route-id="@Model.CustomerId" class="form-text-row">@Model.CustomerInfo</a>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3"><nop-label asp-for="CreatedOn" /></div>
+                        <div class="col-md-9"><div class="form-text-row">@Model.CreatedOn</div></div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="QuestionText" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-textarea asp-for="QuestionText" />
+                            <span asp-validation-for="QuestionText"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="AnswerText" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-textarea asp-for="AnswerText" />
+                            <span asp-validation-for="AnswerText"></span>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <div class="col-md-3">
+                            <nop-label asp-for="IsApproved" />
+                        </div>
+                        <div class="col-md-9">
+                            <nop-editor asp-for="IsApproved" />
+                            <span asp-validation-for="IsApproved"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</form>
+<nop-delete-confirmation asp-model-id="@Model.Id" asp-button-id="question-delete" />

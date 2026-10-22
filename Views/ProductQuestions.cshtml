@@ -1,0 +1,129 @@
+@model ProductQuestionsModel
+
+@*
+    "Questions & answers" section (rendered by the Nopwara product templates after the tabs).
+    The ask form posts over ajax (fetch + FormData, so the antiforgery token, captcha and honeypot fields are sent as usual).
+*@
+@if (!string.IsNullOrEmpty(Model.JsonLd))
+{
+    <script type="application/ld+json">@Html.Raw(Model.JsonLd)</script>
+}
+<section id="product-questions" class="product-questions max-w-3xl py-6"
+         x-data="{
+             asking: false,
+             sending: false,
+             all: false,
+             sent: '',
+             error: '',
+             async submit(form) {
+                 this.error = '';
+                 if (!form.question.value.trim()) { this.error = form.dataset.required; return; }
+                 this.sending = true;
+                 try {
+                     const response = await fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                     const data = await response.json();
+                     if (data.success) { this.sent = data.message; this.asking = false; form.reset(); }
+                     else this.error = data.message;
+                 } catch (e) {
+                     this.error = form.dataset.failed;
+                 } finally {
+                     this.sending = false;
+                 }
+             }
+         }">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-lg font-semibold text-slate-900">
+            @T("Plugins.Misc.NopwaraQA.Title")
+            @if (Model.Questions.Any())
+            {
+                <span class="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-600">@Model.Questions.Count</span>
+            }
+        </h2>
+        @if (Model.CanAsk)
+        {
+            <button type="button" class="inline-flex items-center gap-2 rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:border-slate-400 hover:text-slate-900"
+                    x-show="!asking" x-on:click="asking = true; sent = ''; $nextTick(() => $refs.question.focus())">
+                <svg class="size-4" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z" /></svg>
+                @T("Plugins.Misc.NopwaraQA.Ask")
+            </button>
+        }
+        else
+        {
+            <a href="@Model.LoginUrl" class="text-sm font-medium">@T("Plugins.Misc.NopwaraQA.Ask.LoginRequired")</a>
+        }
+    </div>
+
+    <p x-show="sent" x-cloak x-text="sent" role="status"
+       class="mt-4 rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800"></p>
+
+    @if (Model.CanAsk)
+    {
+        <form x-show="asking" x-cloak action="@Model.AskUrl" method="post" asp-antiforgery="true"
+              x-on:submit.prevent="submit($el)"
+              data-required="@T("Plugins.Misc.NopwaraQA.Ask.Required").Text"
+              data-failed="@T("Plugins.Misc.NopwaraQA.Ask.Error").Text"
+              class="mt-4 space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <label for="nopwara-question" class="sr-only">@T("Plugins.Misc.NopwaraQA.Ask")</label>
+            <textarea id="nopwara-question" name="question" x-ref="question" rows="3" maxlength="500" required
+                      placeholder="@T("Plugins.Misc.NopwaraQA.Ask.Placeholder").Text"
+                      class="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"></textarea>
+            @if (Model.HoneypotEnabled)
+            {
+                @Html.Raw(Html.GenerateHoneypotInput())
+            }
+            @if (Model.DisplayCaptcha)
+            {
+                @*reCAPTCHA v3 checks the action against the posting action name (NopwaraQAController.Ask)*@
+                <nop-captcha action-name="Ask" />
+            }
+            <p x-show="error" x-cloak x-text="error" role="alert" class="text-sm font-medium text-red-600"></p>
+            <div class="flex items-center gap-2">
+                <button type="submit" class="btn btn-primary px-4 py-2 text-sm" :disabled="sending">
+                    <svg x-show="sending" x-cloak class="size-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 0 1 8-8v4a4 4 0 0 0-4 4H4z"></path></svg>
+                    @T("Plugins.Misc.NopwaraQA.Ask.Submit")
+                </button>
+                <button type="button" x-on:click="asking = false; error = ''" class="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900">
+                    @T("Plugins.Misc.NopwaraQA.Ask.Cancel")
+                </button>
+            </div>
+        </form>
+    }
+
+    @if (Model.Questions.Any())
+    {
+        <ul class="mt-6 divide-y divide-slate-100">
+            @for (var i = 0; i < Model.Questions.Count; i++)
+            {
+                var question = Model.Questions[i];
+                <li class="py-5" @(i >= Model.VisibleQuestions ? Html.Raw("x-show=\"all\" x-cloak") : null)>
+                    <p class="flex gap-3 text-sm font-semibold text-slate-900">
+                        <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-xs font-bold text-primary-700" aria-hidden="true">Q</span>
+                        <span>@question.Question</span>
+                    </p>
+                    <p class="ml-9 mt-1 text-xs text-slate-400">@string.Format(T("Plugins.Misc.NopwaraQA.AskedBy").Text, question.AskedBy, question.AskedOn)</p>
+                    @if (!string.IsNullOrWhiteSpace(question.Answer))
+                    {
+                        <div class="mt-3 flex gap-3 text-sm text-slate-700">
+                            <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-xs font-bold text-emerald-700" aria-hidden="true">A</span>
+                            <p class="whitespace-pre-line leading-relaxed"><span class="sr-only">@T("Plugins.Misc.NopwaraQA.Answer"): </span>@question.Answer</p>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="ml-9 mt-2 text-sm italic text-slate-400">@T("Plugins.Misc.NopwaraQA.NotAnswered")</p>
+                    }
+                </li>
+            }
+        </ul>
+        @if (Model.Questions.Count > Model.VisibleQuestions)
+        {
+            <button type="button" x-show="!all" x-on:click="all = true" class="mt-2 text-sm font-semibold text-primary-700 hover:underline">
+                @string.Format(T("Plugins.Misc.NopwaraQA.ShowMore").Text, Model.Questions.Count)
+            </button>
+        }
+    }
+    else
+    {
+        <p class="mt-4 text-sm text-slate-500" x-show="!sent">@T("Plugins.Misc.NopwaraQA.None")</p>
+    }
+</section>

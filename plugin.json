@@ -1,0 +1,11 @@
+{
+  "Group": "Misc",
+  "FriendlyName": "Nopwara product Q&A",
+  "SystemName": "Misc.NopwaraQA",
+  "Version": "1.00",
+  "SupportedVersions": [ "5.00" ],
+  "Author": "Nopwara",
+  "DisplayOrder": 1,
+  "FileName": "Nop.Plugin.Misc.NopwaraQA.dll",
+  "Description": "Product questions & answers: customers ask on the product page, the store answers in admin; answered questions are published with FAQ structured data. Built with Tailwind CSS + Alpine.js for the Nopwara theme."
+}
