@@ -2,7 +2,7 @@
   "Group": "Misc",
   "FriendlyName": "Nopwara product Q&A",
   "SystemName": "Misc.NopwaraQA",
-  "Version": "1.00",
+  "Version": "1.01",
   "SupportedVersions": [ "5.00" ],
   "Author": "Nopwara",
   "DisplayOrder": 1,

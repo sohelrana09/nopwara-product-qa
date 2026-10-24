@@ -2,6 +2,7 @@
 
 @*
     "Questions & answers" section (rendered by the Nopwara product templates after the tabs).
+    Questions are paged (VisibleQuestions per page); all of them stay in the page for search engines and the FAQ structured data.
     The ask form posts over ajax (fetch + FormData, so the antiforgery token, captcha and honeypot fields are sent as usual).
 *@
 @if (!string.IsNullOrEmpty(Model.JsonLd))
@@ -12,7 +13,18 @@
          x-data="{
              asking: false,
              sending: false,
-             all: false,
+             page: 1,
+             pages: @Math.Max(1, (int)Math.Ceiling(Model.Questions.Count / (double)Model.VisibleQuestions)),
+             numbers() {
+                 const start = Math.max(1, Math.min(this.page - 2, this.pages - 4));
+                 return Array.from({ length: Math.min(this.pages, start + 4) - start + 1 }, (_, i) => start + i);
+             },
+             go(n) {
+                 if (n < 1 || n > this.pages) return;
+                 this.page = n;
+                 const list = this.$refs.questions;
+                 if (list && list.getBoundingClientRect().top < 0) list.scrollIntoView({ behavior: 'smooth', block: 'start' });
+             },
              sent: '',
              error: '',
              async submit(form) {
@@ -91,11 +103,12 @@
 
     @if (Model.Questions.Any())
     {
-        <ul class="mt-6 divide-y divide-slate-100">
+        <ul class="mt-6 divide-y divide-slate-100 scroll-mt-24" x-ref="questions">
             @for (var i = 0; i < Model.Questions.Count; i++)
             {
                 var question = Model.Questions[i];
-                <li class="py-5" @(i >= Model.VisibleQuestions ? Html.Raw("x-show=\"all\" x-cloak") : null)>
+                var questionPage = i / Model.VisibleQuestions + 1;
+                <li class="py-5" x-show="page === @questionPage" @(questionPage > 1 ? Html.Raw("x-cloak") : null)>
                     <p class="flex gap-3 text-sm font-semibold text-slate-900">
                         <span class="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-primary-50 text-xs font-bold text-primary-700" aria-hidden="true">Q</span>
                         <span>@question.Question</span>
@@ -117,9 +130,23 @@
         </ul>
         @if (Model.Questions.Count > Model.VisibleQuestions)
         {
-            <button type="button" x-show="!all" x-on:click="all = true" class="mt-2 text-sm font-semibold text-primary-700 hover:underline">
-                @string.Format(T("Plugins.Misc.NopwaraQA.ShowMore").Text, Model.Questions.Count)
-            </button>
+            const string pagerButton = "inline-flex min-w-9 items-center justify-center rounded-md border px-2.5 py-1.5 text-sm font-medium transition disabled:pointer-events-none disabled:opacity-40";
+            <nav class="mt-4 flex flex-wrap items-center justify-between gap-3" aria-label="@T("Plugins.Misc.NopwaraQA.Pages")">
+                <p class="text-sm text-slate-500">@string.Format(T("Plugins.Misc.NopwaraQA.Total").Text, Model.Questions.Count)</p>
+                <div class="flex items-center gap-1">
+                    <button type="button" class="@pagerButton border-slate-200 bg-white text-slate-600 hover:bg-slate-50" :disabled="page === 1" x-on:click="go(page - 1)" aria-label="@T("Pager.Previous")">
+                        <svg class="size-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+                    </button>
+                    <template x-for="n in numbers()" :key="n">
+                        <button type="button" class="@pagerButton" x-text="n" x-on:click="go(n)"
+                                :aria-current="n === page ? 'page' : null"
+                                :class="n === page ? 'border-primary-600 bg-primary-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'"></button>
+                    </template>
+                    <button type="button" class="@pagerButton border-slate-200 bg-white text-slate-600 hover:bg-slate-50" :disabled="page === pages" x-on:click="go(page + 1)" aria-label="@T("Pager.Next")">
+                        <svg class="size-4 rtl:rotate-180" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" /></svg>
+                    </button>
+                </div>
+            </nav>
         }
     }
     else

@@ -120,7 +120,60 @@ public class NopwaraQAPlugin : BasePlugin, IWidgetPlugin
                 await _messageTemplateService.InsertMessageTemplateAsync(template);
         }
 
-        await _localizationService.AddOrUpdateLocaleResourceAsync(new Dictionary<string, string>
+        await _localizationService.AddOrUpdateLocaleResourceAsync(GetLocaleResources());
+
+        await base.InstallAsync();
+    }
+
+    /// <summary>
+    /// Update the plugin: refresh the locale resources (1.01: questions are paged)
+    /// </summary>
+    public override async Task UpdateAsync(string currentVersion, string targetVersion)
+    {
+        await _localizationService.AddOrUpdateLocaleResourceAsync(GetLocaleResources());
+        await _localizationService.DeleteLocaleResourcesAsync("Plugins.Misc.NopwaraQA.ShowMore");
+
+        await base.UpdateAsync(currentVersion, targetVersion);
+    }
+
+    /// <summary>
+    /// Uninstall the plugin
+    /// </summary>
+    public override async Task UninstallAsync()
+    {
+        if (_widgetSettings.ActiveWidgetSystemNames.Contains(NopwaraQADefaults.SYSTEM_NAME))
+        {
+            _widgetSettings.ActiveWidgetSystemNames.Remove(NopwaraQADefaults.SYSTEM_NAME);
+            await _settingService.SaveSettingAsync(_widgetSettings);
+        }
+
+        foreach (var name in new[] { NopwaraQADefaults.NEW_QUESTION_TEMPLATE, NopwaraQADefaults.ANSWERED_TEMPLATE })
+        {
+            foreach (var template in await _messageTemplateService.GetMessageTemplatesByNameAsync(name))
+                await _messageTemplateService.DeleteMessageTemplateAsync(template);
+        }
+
+        await _settingService.DeleteSettingAsync<NopwaraQASettings>();
+        await _localizationService.DeleteLocaleResourcesAsync("Plugins.Misc.NopwaraQA");
+
+        await base.UninstallAsync();
+    }
+
+    #endregion
+
+    #region Properties
+
+    /// <summary>
+    /// Gets a value indicating whether to hide this plugin on the widget list page in the admin area
+    /// </summary>
+    public bool HideInWidgetList => false;
+
+    /// <summary>
+    /// Plugin locale resources (English)
+    /// </summary>
+    private static Dictionary<string, string> GetLocaleResources()
+    {
+        return new Dictionary<string, string>
         {
             //admin
             ["Plugins.Misc.NopwaraQA.Questions"] = "Product questions",
@@ -133,8 +186,8 @@ public class NopwaraQAPlugin : BasePlugin, IWidgetPlugin
             ["Plugins.Misc.NopwaraQA.Fields.QuestionsMustBeApproved.Hint"] = "New questions are published only after approval in admin.",
             ["Plugins.Misc.NopwaraQA.Fields.ShowUnanswered"] = "Show unanswered questions",
             ["Plugins.Misc.NopwaraQA.Fields.ShowUnanswered.Hint"] = "Publish approved questions before they are answered.",
-            ["Plugins.Misc.NopwaraQA.Fields.VisibleQuestions"] = "Questions shown",
-            ["Plugins.Misc.NopwaraQA.Fields.VisibleQuestions.Hint"] = "The number of questions shown before \"Show more\".",
+            ["Plugins.Misc.NopwaraQA.Fields.VisibleQuestions"] = "Questions per page",
+            ["Plugins.Misc.NopwaraQA.Fields.VisibleQuestions.Hint"] = "The number of questions on each page of the product's questions.",
             ["Plugins.Misc.NopwaraQA.Fields.NotifyStoreOwner"] = "Notify store owner",
             ["Plugins.Misc.NopwaraQA.Fields.NotifyStoreOwner.Hint"] = "Email the store owner when a question is asked.",
             ["Plugins.Misc.NopwaraQA.Fields.NotifyCustomer"] = "Notify customer",
@@ -178,44 +231,11 @@ public class NopwaraQAPlugin : BasePlugin, IWidgetPlugin
             ["Plugins.Misc.NopwaraQA.Answer"] = "Answer",
             ["Plugins.Misc.NopwaraQA.NotAnswered"] = "Not answered yet",
             ["Plugins.Misc.NopwaraQA.AskedBy"] = "Asked by {0} on {1}",
-            ["Plugins.Misc.NopwaraQA.ShowMore"] = "Show all {0} questions",
+            ["Plugins.Misc.NopwaraQA.Pages"] = "Question pages",
+            ["Plugins.Misc.NopwaraQA.Total"] = "{0} questions",
             ["Plugins.Misc.NopwaraQA.Guest"] = "a customer"
-        });
-
-        await base.InstallAsync();
+        };
     }
-
-    /// <summary>
-    /// Uninstall the plugin
-    /// </summary>
-    public override async Task UninstallAsync()
-    {
-        if (_widgetSettings.ActiveWidgetSystemNames.Contains(NopwaraQADefaults.SYSTEM_NAME))
-        {
-            _widgetSettings.ActiveWidgetSystemNames.Remove(NopwaraQADefaults.SYSTEM_NAME);
-            await _settingService.SaveSettingAsync(_widgetSettings);
-        }
-
-        foreach (var name in new[] { NopwaraQADefaults.NEW_QUESTION_TEMPLATE, NopwaraQADefaults.ANSWERED_TEMPLATE })
-        {
-            foreach (var template in await _messageTemplateService.GetMessageTemplatesByNameAsync(name))
-                await _messageTemplateService.DeleteMessageTemplateAsync(template);
-        }
-
-        await _settingService.DeleteSettingAsync<NopwaraQASettings>();
-        await _localizationService.DeleteLocaleResourcesAsync("Plugins.Misc.NopwaraQA");
-
-        await base.UninstallAsync();
-    }
-
-    #endregion
-
-    #region Properties
-
-    /// <summary>
-    /// Gets a value indicating whether to hide this plugin on the widget list page in the admin area
-    /// </summary>
-    public bool HideInWidgetList => false;
 
     #endregion
 }
