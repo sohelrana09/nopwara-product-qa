@@ -1,5 +1,7 @@
 using FluentMigrator;
+using Nop.Core;
 using Nop.Data.Extensions;
+using Nop.Data.Mapping;
 using Nop.Data.Migrations;
 using Nop.Plugin.Misc.NopwaraQA.Domain;
 
@@ -13,7 +15,7 @@ public class SchemaMigration : Migration
     /// </summary>
     public override void Up()
     {
-        this.CreateTableIfNotExists<ProductQuestion>();
+        CreateTableIfNotExists<ProductQuestion>();
     }
 
     /// <summary>
@@ -21,6 +23,20 @@ public class SchemaMigration : Migration
     /// </summary>
     public override void Down()
     {
-        this.DeleteTableIfExists<ProductQuestion>();
+        DeleteTableIfExists<ProductQuestion>();
+    }
+
+    //nopCommerce 4.90 has no CreateTableIfNotExists/DeleteTableIfExists migration extensions (5.00 does)
+    private void CreateTableIfNotExists<TEntity>() where TEntity : BaseEntity
+    {
+        if (!Schema.Table(NameCompatibilityManager.GetTableName(typeof(TEntity))).Exists())
+            Create.TableFor<TEntity>();
+    }
+
+    private void DeleteTableIfExists<TEntity>() where TEntity : BaseEntity
+    {
+        var tableName = NameCompatibilityManager.GetTableName(typeof(TEntity));
+        if (Schema.Table(tableName).Exists())
+            Delete.Table(tableName);
     }
 }

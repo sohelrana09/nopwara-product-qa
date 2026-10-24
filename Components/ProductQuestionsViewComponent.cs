@@ -9,7 +9,7 @@ using Nop.Plugin.Misc.NopwaraQA.Services;
 using Nop.Services.Customers;
 using Nop.Services.Helpers;
 using Nop.Services.Localization;
-using Nop.Services.Themes;
+using Nop.Web.Framework.Themes;
 using Nop.Web.Framework.Components;
 using Nop.Web.Framework.Mvc.Routing;
 using Nop.Web.Models.Catalog;
